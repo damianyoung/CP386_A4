@@ -62,6 +62,35 @@ int main(int argc, char *argv[])
         available[i - 1] = atoi(argv[i]);
     }
     // Make two for loops above into one loop
+
+    int allocated[customers][resources];
+    for (int i = 0; i < customers; i++)
+    {
+        for (int j = 0; j < resources; j++)
+        {
+            allocated[i][j] = 0;
+        }
+    }
+
+    int max[customers][resources];
+    printf("Maximum resources available to each customer:\n");
+    readFileSeq("sample4_in.txt", max);
+
+    int need[customers][resources];
+    for (int i = 0; i < customers; i++)
+    {
+        for (int j = 0; j < resources; j++)
+        {
+            need[i][j] = max[i][j] - allocated[i][j];
+        }
+    }
+
+    available_ptr = &available[0];
+    max_ptr = &max[0][0];
+    allocated_ptr = &allocated[0][0];
+    need_ptr = &need[0][0];
+
+    run();
     return 0;
 }
 
@@ -117,4 +146,56 @@ int readFileCustomer(char *fileName)
 
     fclose(fp);
     return count;
+}
+
+void readFileSeq(char *fileName, int max[customers][resources])
+{
+    FILE *fp = fopen(fileName, "r");
+
+    if (fp == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(-1);
+    }
+
+    char *letter;
+
+    int i = 0;
+    while (!feof(fp))
+    {
+        char line[100];
+        fgets(line, 100, fp);
+        printf("%s", line);
+        letter = strtok(line, ",");
+        int j = 0;
+        while (letter != NULL)
+        {
+            max[i][j] = atoi(letter);
+            letter = strtok(NULL, ",");
+            j++;
+        }
+        i++;
+    }
+    printf("\n");
+    fclose(fp);
+}
+
+// probs gonna just implement this in main later
+void run()
+{
+    char cmd[100];
+    bool running = true;
+
+    while (running)
+    {
+        printf("Enter a command: ");
+        fgets(cmd, 100, stdin);
+        char *command = strtok(cmd, " ");
+
+        letter = strtok(NULL, " ");
+        while (letter != NULL)
+        {
+            letter = strtok(NULL, " ");
+        }
+    }
 }
