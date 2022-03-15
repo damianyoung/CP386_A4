@@ -189,13 +189,160 @@ void run()
     while (running)
     {
         printf("Enter a command: ");
+
         fgets(cmd, 100, stdin);
         char *command = strtok(cmd, " ");
+        char *temp = command;
 
-        letter = strtok(NULL, " ");
-        while (letter != NULL)
+        command = strtok(NULL, " ");
+        int i = 0;
+        int args[resources + 1];
+        while (command != NULL)
         {
-            letter = strtok(NULL, " ");
+            args[i] = atoi(command);
+            i++;
+            command = strtok(NULL, " ");
         }
+
+        if (strstr(temp, "RQ") != NULL)
+        {
+            printf("\nThe Safe Sequence has started, the algorithm will now verify your requested resources (rq)...\n");
+            if (request(args) == 0)
+            {
+                printf("System not in safe state\n");
+            }
+        }
+        else if (strstr(temp, "RL") != NULL)
+        {
+            printf("\nThe Safe Sequence has started, the algorithm will now verify your requested resources (rl)...\n");
+            if (release(args) == 0)
+            {
+                printf("System not in safe state\n");
+            }
+        }
+    }
+}
+
+int request(int args[])
+{
+    int customer = args[0];
+    int requested[resources];
+    for (int i = 0; i < resources; i++)
+    {
+        requested[i] = args[i + 1];
+    }
+
+    bool isSafe = true;
+
+    for (int i = 0; i < resources && isSafe == true; i++)
+    {
+        isSafe = requested[i] <= *(need_ptr + (customer * resources) + i);
+    }
+
+    if (isSafe == true)
+    {
+        for (int i = 0; i < resources; i++)
+        {
+            isSafe = requested[i] <= *(available_ptr + i);
+        }
+        if (isSafe == true)
+        {
+            for (int i = 0; i < resources; i++)
+            {
+                available_ptr[i] -= requested[i];
+                *((allocated_ptr + (customer * resources)) + i) += requested[i];
+                *((need_ptr + (customer * resources)) + i) -= requested[i];
+            }
+            // do safety algorithm
+            if (safety(available_ptr, max_ptr, allocated_ptr, need_ptr))
+            {
+                return 1;
+            }
+            else
+            {
+                for (int i = 0; i < resources; i++)
+                {
+                    available_ptr[i] += requested[i];
+                    *((allocated_ptr + (customer * resources)) + i) -= requested[i];
+                    *((need_ptr + (customer * resources)) + i) += requested[i];
+                }
+                printf("System is not in safe state\n");
+                return 0;
+            }
+        }
+        else
+        {
+            printf("System is not in safe state\n");
+            return 0;
+        }
+    }
+    else
+    {
+        printf("System is not in safe state\n");
+        return 0;
+    }
+}
+
+bool safety(int *available, int *max, int *allocated, int *need)
+{
+    int work[resources];
+    for (int i = 0; i < resources; i++)
+    {
+        work[i] = *(available + i);
+    }
+    printf("\n");
+
+    bool finish[resources];
+    for (int i = 0; i < resources; i++)
+    {
+        finish[i] = false;
+    }
+
+    int safeSeq[resources];
+    int count = 0;
+    while (count < resources)
+    {
+        bool found = false;
+        for (int i = 0; i < resources; i++)
+        {
+            if (finish[i] == false)
+            {
+                int j;
+                for (j = 0; j < resources; j++)
+                {
+                    if (*((need + i * resources) + j) > work[j])
+                    {
+                        break;
+                    }
+                }
+                if (j == resources)
+                {
+                    for (int k = 0; k < resources; k++)
+                    {
+                        work[k] += *((allocated + i * resources) + k);
+                    }
+                    finish[i] = true;
+                    found = true;
+                    safeSeq[count++] = i;
+                }
+            }
+        }
+        if (found == false)
+        {
+            printf("System is not in a safe state\n");
+            return false;
+        }
+    }
+}
+
+int release(int args[])
+{
+    int customer = args[0];
+    int released[resources];
+    bool isSafe = true;
+
+    for (int i = 0; i < resources; i++)
+    {
+        released[i] = args[i + 1];
     }
 }
