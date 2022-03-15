@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
     printf("%s\n", argv[resources]);
 
     int *available = (int *)malloc(resources * sizeof(int));
-    for (int i = 0; i < resources; i++)
+    for (int i = 1; i < resources; i++)
     {
-        available[i] = atoi(argv[i + 1]);
+        available[i - 1] = atoi(argv[i]);
     }
     // Make two for loops above into one loop
     return 0;
