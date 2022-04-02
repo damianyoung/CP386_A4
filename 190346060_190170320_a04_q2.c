@@ -9,8 +9,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-int *available_ptr;
-int *hole_ptr;
+Block *available_ptr;
+Hole *hole_ptr;
 int max_mem;
 int allocated_mem;
 
@@ -38,6 +38,16 @@ int main(int argc, char *args[])
 	if (argc > 1)
 	{
 		max_mem = args[1];
+		allocated_mem = 0;
+		Hole *holes = (Hole *)malloc(50 * sizeof(Hole));
+		Block *blocks = (Block *)malloc(50 * sizeof(Block));
+		Hole first;
+		first.length = max_mem;
+		first.start = 0;
+		first.end = max_mem -1;
+		blocks[0] =
+		available_ptr = &blocks[0];
+		hole_ptr = &holes[0];
 		run();
 	}
 
@@ -71,7 +81,7 @@ void run()
         }
 
 
-        if (strstr(temp, "RQ") != NULL)
+        if (strstr(temp, "RQ") != NULL) //tbd
         {
             if (request(mem) == 0)
             {
