@@ -10,14 +10,15 @@
 #include <ctype.h>
 
 Block *available_ptr;
+int next_block_i = 0;
 Hole *hole_ptr;
 int max_mem;
 int allocated_mem;
 
 void run();
 void status(Hole *hole, Block *allocated);
-int request(int mem);
-int release(int mem);
+int request(int process, int mem);
+int release(int process);
 
 typedef struct block
 {
@@ -28,7 +29,7 @@ typedef struct block
 
 typedef struct hole
 {
-    int lenght;
+    int length;
     int start; //address
     int end;
 } Hole;
@@ -82,6 +83,7 @@ void run()
         char *temp = command;
 
         command = strtok(NULL, " ");
+	int process;
         int mem;
         char algorithm; //Note: for Best-Fit algorithm, so it is redundant
         if(strstr(temp, "Exit") != NULL){
@@ -94,25 +96,75 @@ void run()
         	command = strtok(NULL, " ");
         	algorithm = command;
         }*/
-
+	
+	process = atoi(command[1]); //the number in process
+        command = strtok(NULL, " ");
         if (strstr(temp, "RQ") != NULL)
         {
 	    mem = atoi(command);
-            if (request(mem) == 0)
+            if (request(process, mem) == 0)
             {
                 printf("No hole of sufficient size\n");
             }
+	    else
+            	printf("Successfully allocated %d to process P%d\n", mem, process);
         }
         else if (strstr(temp, "RL") != NULL)
         {
-	    mem = atoi(command[1]); //the number in process
-            if (release(mem) == 0)
+	    printf("releasing memory for process P%d\n", process);
+            if (release(process) == 0)
             {
                 printf("No partitions to release\n");
             }
+	    else
+            	printf("Successfully released memory for process P%d\n", process);
         }
         else if(strstr(temp, "Status") != NULL){
         	status(hole_ptr, available_ptr);
         }
     }
+}
+
+void status(Hole *hole, Block *allocated){
+	printf("Partitions [Allocated memory = %d]:\n", allocated_mem);
+	for(int i=0; i < 50; i++){
+		if(allocated[i] != null){
+			printf("Address [%d:%d] Process P%d\n", allocated[i].start, allocated[i].end, allocated[i].process);
+		}
+	}
+	printf("\n");
+	printf("Holes [Free memory = %d]:\n", max_mem - allocated_mem);
+	for(int i=0; i < 50; i++){
+		if(hole[i] != null){
+			printf("Address [%d:%d] len = %d\n", hole[i].start, hole[i].end, hole[i].length);
+		}
+	}
+}
+
+int request(int process, int mem){
+	int pass = 0;
+	int smallest_mem = max_mem;
+	int smallest_i = null;
+	for(int i=0; i < 50; i++){
+		if(hole_ptr[i] != null && mem <= hole_ptr[i].length && hole_ptr[i].length <= smallest_mem){
+			smallest_i = i;
+			smallest_mem = hole_ptr[i].length;
+			pass = 1;
+		}
+	}
+	if(pass == 1){
+		Block new;
+		new.process = process;
+		new.start = hole_ptr[smallest_i].start;
+		new.end = new.start + mem-1;
+		available_ptr[next_block_i] = new;
+		next_block_i++;
+		hole_ptr[smallest_i].length = hole_ptr[smallest_i].length - mem;
+		hole_ptr[smallest_i].start += mem;
+		if(hole_ptr[smallest_i].length == 0){
+			hole_ptr[smallest_i] = null;
+		}
+		allocated_mem += mem;
+	}
+	return pass;
 }
