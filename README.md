@@ -13,5 +13,5 @@ You must maintain the README.md file for the repository to explain the following
 
 Individual contribution (Function-wise):
 
-Damian does Question 1, while
+Damian Young does Question 1, while
 Johnson Huynh does Question 2
