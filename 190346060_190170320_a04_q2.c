@@ -15,9 +15,9 @@ int max_mem;
 int allocated_mem;
 
 void run();
+void status(Hole *hole, Block *allocated);
 int request(int mem);
 int release(int mem);
-void status(Hole *hole, Block *allocated);
 
 typedef struct block
 {
@@ -33,6 +33,21 @@ typedef struct hole
     int end;
 } Hole;
 
+void status(Hole *hole, Block *allocated){
+	printf("Partitions [Allocated memory = %d]:\n", allocated_mem);
+	for(int i=0; i < 50; i++){
+		if(allocated[i] != null){
+			printf("Address [%d:%d] Process P%d\n", allocated[i].start, allocated[i].end, allocated[i].process);
+		}
+	}
+	printf("\n");
+	printf("Holes [Free memory = %d]:\n", max_mem - allocated_mem);
+	for(int i=0; i < 50; i++){
+		if(hole[i] != null){
+			printf("Address [%d:%d] len = %d\n", hole[i].start, hole[i].end, hole[i].length);
+		}
+	}
+}
 int main(int argc, char *args[])
 {
 	if (argc > 1)
@@ -68,32 +83,36 @@ void run()
 
         command = strtok(NULL, " ");
         int mem;
-        char algorithm;
+        char algorithm; //Note: for Best-Fit algorithm, so it is redundant
         if(strstr(temp, "Exit") != NULL){
-        	exit(0);
+        	running = false;
         }
-        else if (command != NULL)
+        /*else if (command != NULL)
         {
         	command = strtok(NULL, " ");
         	mem = atoi(command);
         	command = strtok(NULL, " ");
         	algorithm = command;
-        }
+        }*/
 
-
-        if (strstr(temp, "RQ") != NULL) //tbd
+        if (strstr(temp, "RQ") != NULL)
         {
+	    mem = atoi(command);
             if (request(mem) == 0)
             {
-                printf("System not in safe state\n");
+                printf("No hole of sufficient size\n");
             }
         }
         else if (strstr(temp, "RL") != NULL)
         {
+	    mem = atoi(command[1]); //the number in process
             if (release(mem) == 0)
             {
-                printf("System not in safe state\n");
+                printf("No partitions to release\n");
             }
+        }
+        else if(strstr(temp, "Status") != NULL){
+        	status(hole_ptr, available_ptr);
         }
     }
 }
