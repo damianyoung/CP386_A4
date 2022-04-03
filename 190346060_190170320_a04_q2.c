@@ -67,7 +67,7 @@ int main(int argc, char *args[])
 		first.length = max_mem;
 		first.start = 0;
 		first.end = max_mem -1;
-		blocks[0] =
+		blocks[0] = first;
 		available_ptr = &blocks[0];
 		hole_ptr = &holes[0];
 		run();
