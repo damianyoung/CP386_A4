@@ -5,7 +5,6 @@ link: https://github.com/damianyoung/CP386_A4
 */
 
 #include <stdio.h>
-#include <semaphore.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
