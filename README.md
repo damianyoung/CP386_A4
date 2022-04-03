@@ -11,6 +11,7 @@ You must maintain the README.md file for the repository to explain the following
 • About Developers 
 • License to use your code
 
-Individual contribution (Function-wise)
-Damian does Question 1
+Individual contribution (Function-wise):
+
+Damian does Question 1, while
 Johnson Huynh does Question 2
