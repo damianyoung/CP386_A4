@@ -11,7 +11,11 @@ You must maintain the README.md file for the repository to explain the following
 • About Developers 
 • License to use your code
 
-Individual contribution (Function-wise):
+• Individual contribution (Function-wise):
 
 Damian Young does Question 1, while
 Johnson Huynh does Question 2
+
+• Tests cases (if any) 
+
+Syntax errors in Question 2 dealing with pointers.
