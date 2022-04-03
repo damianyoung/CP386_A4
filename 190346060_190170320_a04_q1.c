@@ -1,3 +1,9 @@
+/*
+Damian Young: 190346060: damianyoung
+Johnson Huynh: 190170320: CodeJohnson0162
+link: https://github.com/damianyoung/CP386_A4
+*/
+
 #include <stdio.h>
 #include <semaphore.h>
 #include <unistd.h>
