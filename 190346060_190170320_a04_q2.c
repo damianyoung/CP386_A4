@@ -174,3 +174,36 @@ int request(int process, int mem){
 	}
 	return pass;
 }
+
+int release(int process){
+	int pass = 0;
+	int target_i = null;
+	int merged = 0;
+	for(int i=0; i < 50; i++){
+		if(available_ptr[i] != null && available_ptr[i].process == process){
+			target_i = i;
+			pass = 1;
+		}
+	}
+	if(pass == 1){
+		allocated_mem -= (available_ptr[target_i].end - available_ptr[target_i].start)+1;
+		
+		for(int i=0; i < 50; i++){
+			if(hole_ptr[i] != null && merged == 0){
+				if(available_ptr[target_i].start -1 == hole_ptr[i].end){
+					hole_ptr[i].length += (available_ptr[target_i].end-available_ptr[target_i].start+1);
+					hole_ptr[i].end = available_ptr[target_i].end;
+					merged = 1;
+				}
+				else if(available_ptr[target_i].end +1 == hole_ptr[i].start){
+					hole_ptr[i].length += (available_ptr[target_i].end-available_ptr[target_i].start+1);
+					hole_ptr[i].start = available_ptr[target_i].start;
+					merged = 1;
+				}
+			}
+		}
+		available_ptr[target_i] = null;
+	}
+	
+	return pass;
+}
