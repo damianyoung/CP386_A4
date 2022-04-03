@@ -201,6 +201,14 @@ int release(int process){
 					merged = 1;
 				}
 			}
+			//if merged, check if it was surrounded on both sides
+			if(hole_ptr[i] != null && merged == 1){
+				if(hole_ptr[i].start -1 == hole_ptr[i-1].end){
+					hole_ptr[i-1].length += hole_ptr[i].length;
+					hole_ptr[i-1].end = hole_ptr[i].end;
+					hole_ptr[i] = null;
+				}
+			}
 		}
 		available_ptr[target_i] = null;
 	}
