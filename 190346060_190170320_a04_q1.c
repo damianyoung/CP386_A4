@@ -1,3 +1,9 @@
+/*
+Damian Young: 190346060: damianyoung
+Johnson Huynh: 190170320: CodeJohnson0162
+link: https://github.com/damianyoung/CP386_A4
+*/
+
 #include <stdio.h>
 #include <semaphore.h>
 #include <unistd.h>
@@ -9,33 +15,21 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-int *available_ptr;
-int *max_ptr;
-int *allocated_ptr;
-int *need_ptr;
+int *availablePtr;
+int *maxPtr;
+int *allocatedPtr;
+int *needPtr;
 
-int customers = 0; // customers
-int resources = 0; // rows
+int customers = 0;
+int resources = 0;
 
 int readFileCustomer(char *fileName);
-void readFileSeq(char *fileName, int max[customers][resources]);
 bool safety(int *available, int *max, int *allocated, int *need);
-int sumArr(int arr[], int n);
 void findNumCol(char *fileName);
-void banker();
-void run();
 int request(int args[]);
 int release(int args[]);
 void status(int *available, int *max, int *allocated, int *need);
-
-typedef struct thread
-{
-    char tid[4];
-    unsigned int startTime;
-    int state;
-    pthread_t handle;
-    int ret;
-} Thread;
+void *threadRun();
 
 int main(int argc, char *argv[])
 {
@@ -47,9 +41,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    printf("Total # of Customers: %d\n", customers);
-    printf("Current number of available resources: \n");
-    // Make two for loops below into one loop
+    printf("Number of Customers: %d\n", customers);
+    printf("Currently available resources: ");
     for (int i = 1; i < resources; i++)
     {
         printf("%s ", argv[i]);
@@ -61,7 +54,6 @@ int main(int argc, char *argv[])
     {
         available[i - 1] = atoi(argv[i]);
     }
-    // Make two for loops above into one loop
 
     int allocated[customers][resources];
     for (int i = 0; i < customers; i++)
@@ -73,8 +65,36 @@ int main(int argc, char *argv[])
     }
 
     int max[customers][resources];
-    printf("Maximum resources available to each customer:\n");
-    readFileSeq("sample4_in.txt", max);
+    printf("Maximum resources from file:\n");
+    FILE *fp = fopen("sample4_in.txt", "r");
+
+    if (fp == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(-1);
+    }
+
+    char *letter;
+
+    int i = 0;
+    while (!feof(fp))
+    {
+        char line[100];
+        fgets(line, 100, fp);
+        letter = strtok(line, ",");
+        int j = 0;
+        while (letter != NULL)
+        {
+            max[i][j] = atoi(letter);
+            printf("%d ", max[i][j]);
+            letter = strtok(NULL, ",");
+            j++;
+        }
+        printf("\n");
+        i++;
+    }
+    printf("\n");
+    fclose(fp);
 
     int need[customers][resources];
     for (int i = 0; i < customers; i++)
@@ -85,12 +105,65 @@ int main(int argc, char *argv[])
         }
     }
 
-    available_ptr = &available[0];
-    max_ptr = &max[0][0];
-    allocated_ptr = &allocated[0][0];
-    need_ptr = &need[0][0];
+    availablePtr = &available[0];
+    maxPtr = &max[0][0];
+    allocatedPtr = &allocated[0][0];
+    needPtr = &need[0][0];
 
-    run();
+    char cmd[100];
+    bool running = true;
+
+    while (running)
+    {
+        printf("Enter a command: ");
+
+        fgets(cmd, 100, stdin);
+        char *command = strtok(cmd, " ");
+        char *temp = command;
+
+        command = strtok(NULL, " ");
+        int i = 0;
+        int args[resources + 1];
+        while (command != NULL)
+        {
+            args[i] = atoi(command);
+            i++;
+            command = strtok(NULL, " ");
+        }
+
+        if (strstr(temp, "RQ") != NULL)
+        {
+            printf("\nState is safe, and request is satisfied\n");
+            if (request(args) == 0)
+            {
+                printf("System not in safe state\n");
+            }
+        }
+        else if (strstr(temp, "RL") != NULL)
+        {
+            printf("\nState is safe, and request is satisfied\n");
+            if (release(args) == 0)
+            {
+                printf("System not in safe state\n");
+            }
+        }
+        else if (strstr(temp, "Status"))
+        {
+            status(availablePtr, maxPtr, allocatedPtr, needPtr);
+        }
+        else if (strstr(temp, "Run") != NULL)
+        {
+            threadRun();
+        }
+        else if (strstr(temp, "Exit") != NULL)
+        {
+            running = false;
+        }
+        else
+        {
+            printf("Invalid command\n");
+        }
+    }
     return 0;
 }
 
@@ -148,81 +221,6 @@ int readFileCustomer(char *fileName)
     return count;
 }
 
-void readFileSeq(char *fileName, int max[customers][resources])
-{
-    FILE *fp = fopen(fileName, "r");
-
-    if (fp == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(-1);
-    }
-
-    char *letter;
-
-    int i = 0;
-    while (!feof(fp))
-    {
-        char line[100];
-        fgets(line, 100, fp);
-        printf("%s", line);
-        letter = strtok(line, ",");
-        int j = 0;
-        while (letter != NULL)
-        {
-            max[i][j] = atoi(letter);
-            letter = strtok(NULL, ",");
-            j++;
-        }
-        i++;
-    }
-    printf("\n");
-    fclose(fp);
-}
-
-// probs gonna just implement this in main later
-void run()
-{
-    char cmd[100];
-    bool running = true;
-
-    while (running)
-    {
-        printf("Enter a command: ");
-
-        fgets(cmd, 100, stdin);
-        char *command = strtok(cmd, " ");
-        char *temp = command;
-
-        command = strtok(NULL, " ");
-        int i = 0;
-        int args[resources + 1];
-        while (command != NULL)
-        {
-            args[i] = atoi(command);
-            i++;
-            command = strtok(NULL, " ");
-        }
-
-        if (strstr(temp, "RQ") != NULL)
-        {
-            printf("\nThe Safe Sequence has started, the algorithm will now verify your requested resources (rq)...\n");
-            if (request(args) == 0)
-            {
-                printf("System not in safe state\n");
-            }
-        }
-        else if (strstr(temp, "RL") != NULL)
-        {
-            printf("\nThe Safe Sequence has started, the algorithm will now verify your requested resources (rl)...\n");
-            if (release(args) == 0)
-            {
-                printf("System not in safe state\n");
-            }
-        }
-    }
-}
-
 int request(int args[])
 {
     int customer = args[0];
@@ -236,25 +234,24 @@ int request(int args[])
 
     for (int i = 0; i < resources && isSafe == true; i++)
     {
-        isSafe = requested[i] <= *(need_ptr + (customer * resources) + i);
+        isSafe = requested[i] <= *(needPtr + (customer * resources) + i);
     }
 
     if (isSafe == true)
     {
         for (int i = 0; i < resources; i++)
         {
-            isSafe = requested[i] <= *(available_ptr + i);
+            isSafe = requested[i] <= *(availablePtr + i);
         }
         if (isSafe == true)
         {
             for (int i = 0; i < resources; i++)
             {
-                available_ptr[i] -= requested[i];
-                *((allocated_ptr + (customer * resources)) + i) += requested[i];
-                *((need_ptr + (customer * resources)) + i) -= requested[i];
+                availablePtr[i] -= requested[i];
+                *((allocatedPtr + (customer * resources)) + i) += requested[i];
+                *((needPtr + (customer * resources)) + i) -= requested[i];
             }
-            // do safety algorithm
-            if (safety(available_ptr, max_ptr, allocated_ptr, need_ptr))
+            if (safety(availablePtr, maxPtr, allocatedPtr, needPtr))
             {
                 return 1;
             }
@@ -262,9 +259,9 @@ int request(int args[])
             {
                 for (int i = 0; i < resources; i++)
                 {
-                    available_ptr[i] += requested[i];
-                    *((allocated_ptr + (customer * resources)) + i) -= requested[i];
-                    *((need_ptr + (customer * resources)) + i) += requested[i];
+                    availablePtr[i] += requested[i];
+                    *((allocatedPtr + (customer * resources)) + i) -= requested[i];
+                    *((needPtr + (customer * resources)) + i) += requested[i];
                 }
                 printf("System is not in safe state\n");
                 return 0;
@@ -345,4 +342,125 @@ int release(int args[])
     {
         released[i] = args[i + 1];
     }
+
+    for (int i = 0; i < resources; i++)
+    {
+        isSafe = released[i] <= *(allocatedPtr + (customer * resources) + i);
+        if (isSafe == true)
+        {
+            for (int j = 0; j < resources; j++)
+            {
+                *(availablePtr + j) += released[j];
+                *((allocatedPtr + (customer * resources)) + j) -= released[j];
+                *((needPtr + (customer * resources)) + j) += released[j];
+            }
+            return 1;
+        }
+        else
+        {
+            printf("System is not in a safe state\n");
+            return 0;
+        }
+    }
+    return 0;
+}
+
+void status(int *available, int *max, int *allocated, int *need)
+{
+    printf("\n");
+    printf("Available\n");
+    for (int i = 0; i < customers; i++)
+    {
+        printf("%d ", *(available + i));
+    }
+    printf("\n");
+    printf("Max\n");
+    for (int i = 0; i < customers; i++)
+    {
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *(max + (i * resources) + j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+    printf("Allocated\n");
+    for (int i = 0; i < customers; i++)
+    {
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *(allocated + (i * resources) + j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+    printf("Need\n");
+    for (int i = 0; i < customers; i++)
+    {
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *(need + (i * resources) + j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void *threadRun()
+{
+    char seq[100];
+    int res[resources];
+    printf("Safe sequence is: ");
+    fgets(seq, 100, stdin);
+    printf("\n");
+    char *token = strtok(seq, " ");
+
+    int arg[5];
+    int count = 0;
+    while (token != NULL)
+    {
+        arg[count] = atoi(token);
+        token = strtok(NULL, " ");
+        count++;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        printf("Customer/Thread %d\n", arg[i]);
+        printf("Allocated resources: ");
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *((allocatedPtr + (arg[i] * resources)) + j));
+            res[j] = *((allocatedPtr + (arg[i] * resources)) + j);
+        }
+        printf("\n");
+        printf("Needed: ");
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *((needPtr + (arg[i] * resources)) + j));
+        }
+        printf("\n");
+        printf("Available: ");
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *(availablePtr + j));
+        }
+        printf("\n");
+        printf("Thread has started\n");
+        printf("Thread has finished\n");
+        for (int j = 0; j < resources; j++)
+        {
+            *(availablePtr + j) += res[j];
+            *((allocatedPtr + (arg[i] * resources)) + j) = 0;
+            *((needPtr + (arg[i] * resources)) + j) = *(maxPtr + (arg[i] * resources) + j);
+        }
+        printf("Thread is releasing resources\n");
+        printf("New Available: ");
+        for (int j = 0; j < resources; j++)
+        {
+            printf("%d ", *(availablePtr + j));
+        }
+        printf("\n");
+    }
+    return NULL;
 }
